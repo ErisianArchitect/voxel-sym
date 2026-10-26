@@ -1,3 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright © 2026-present Ada F. <https://github.com/ErisianArchitect>
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 const std = @import("std");
 
@@ -22,12 +36,28 @@ pub fn assertSizeEq(comptime T: type, comptime size: usize, comptime message: ?[
     assertionCall(sizeEq, .{T, size}, message orelse comptimePrint("Assertion Failed: Size of {s} != {d}.", .{@typeName(T), size}));
 }
 
+pub inline fn sameSize(comptime A: type, comptime B: type) bool {
+    return @sizeOf(A) == @sizeOf(B);
+}
+
+pub fn assertSameSize(comptime A: type, comptime B: type, comptime message: ?[]const u8) void {
+    assertionCall(sameSize, .{A, B}, message orelse comptimePrint("Assertion Failed: Size of {s} != Size of {s}", .{@typeName(A), @typeName(B)}));
+}
+
 pub inline fn sizeNe(comptime T: type, comptime size: usize) bool {
     return @sizeOf(T) != size;
 }
 
 pub fn assertSizeNe(comptime T: type, comptime size: usize, comptime message: ?[]const u8) void {
     assertionCall(sizeNe, .{T, size}, message orelse comptimePrint("Assertion Failed: Size of {s} == {d}.", .{@typeName(T), size}));
+}
+
+pub inline fn differentSize(comptime A: type, comptime B: type) bool {
+    return @sizeOf(A) != @sizeOf(B);
+}
+
+pub fn assertDifferentSize(comptime A: type, comptime B: type, comptime message: ?[]const u8) void {
+    assertionCall(differentSize, .{A, B}, message orelse comptimePrint("Assertion Failed: Size of {s} == Size of {s}.", .{@typeName(A), @typeName(B)}));
 }
 
 pub inline fn alignEq(comptime T: type, comptime alignment: usize) bool {
@@ -38,12 +68,28 @@ pub fn assertAlignEq(comptime T: type, comptime alignment: usize, comptime messa
     assertionCall(alignEq, .{T, alignment}, message orelse comptimePrint("Assertion Failed: Align of {s} != {d}.", .{@typeName(T), alignment}));
 }
 
+pub inline fn sameAlign(comptime A: type, comptime B: type) bool {
+    return @alignOf(A) == @alignOf(B);
+}
+
+pub fn assertSameAlign(comptime A: type, comptime B: type, comptime message: ?[]const u8) void {
+    assertionCall(sameAlign, .{A, B}, message orelse comptimePrint("Assertion Failed: Align of {s} != Align of {s}.", .{@typeName(A), @typeName(B)}));
+}
+
 pub inline fn alignNe(comptime T: type, comptime alignment: usize) bool {
     return @alignOf(T) != alignment;
 }
 
 pub fn assertAlignNe(comptime T: type, comptime alignment: usize, comptime message: ?[]const u8) void {
     assertionCall(alignNe, .{T, alignment}, message orelse comptimePrint("Assertion Failed: Align of {s} == {d}.", .{@typeName(T), alignment}));
+}
+
+pub inline fn differentAlign(comptime A: type, comptime B: type) bool {
+    return @alignOf(A) != @alignOf(B);
+}
+
+pub fn assertDifferentAlign(comptime A: type, comptime B: type, comptime message: ?[]const u8) void {
+    assertionCall(differentAlign, .{A, B}, message orelse comptimePrint("Assertion Failed: Align of {s} == Align of {s}.", .{@typeName(A), @typeName(B)}));
 }
 
 pub inline fn offsetOfEq(comptime T: type, comptime field: @EnumLiteral(), comptime offset: usize) bool {
@@ -92,6 +138,15 @@ pub inline fn typeNe(comptime A: type, comptime B: type) bool {
 
 pub fn assertTypeNe(comptime A: type, comptime B: type, comptime message: ?[]const u8) void {
     assertionCall(typeNe, .{A, B}, message orelse comptimePrint("Assertion Failed: {s} is {s}.", .{@typeName(A), @typeName(B)}));
+}
+
+pub inline fn unimplemented(comptime message: ?[]const u8) noreturn {
+    const msg = message orelse "Not yet implemented.";
+    if (@inComptime()) {
+        @compileError(msg);
+    } else {
+        @panic(msg);
+    }
 }
 
 comptime {
