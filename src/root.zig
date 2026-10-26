@@ -25,7 +25,7 @@ pub const axis = @import("axis.zig");
 
 comptime {
     @import("coreo").debug.checking.checkAllDecls(
-        @import("CFG").check,
+        @import("cfg").check,
         &.{
             isit,
             cartesian,

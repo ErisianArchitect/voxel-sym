@@ -61,15 +61,15 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     }));
 
-    imports.addDependency("coreo", coreo_mod, null);
-
     const build_opts = b.addOptions();
     const check_opts = b.addOptions();
 
     build_opts.addOption(bool, "CHECK", false);
     check_opts.addOption(bool, "CHECK", false);
 
-    imports.addOptions("CFG", build_opts, check_opts);
+    imports.addOptions("cfg", build_opts, check_opts);
+
+    imports.addDependency("coreo", coreo_mod, null);
 
     const exe = b.addExecutable(.{
         .name = "voxel_symmetry",
