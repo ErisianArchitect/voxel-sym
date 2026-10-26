@@ -23,6 +23,21 @@ pub const rotation = @import("rotation.zig");
 pub const axial = @import("axial.zig");
 pub const axis = @import("axis.zig");
 
+comptime {
+    @import("coreo").debug.checking.checkAllDecls(
+        @import("CFG").check,
+        &.{
+            isit,
+            cartesian,
+            config,
+            face,
+            rotation,
+            axial,
+            axis,
+        },
+    );
+}
+
 pub const Config = config.Config;
 pub const AngleDirection = config.AngleDirection;
 pub const CoordinateSystem = config.CoordinateSystem;
@@ -37,7 +52,3 @@ pub const CartesianRotationIter = rotation.CartesianRotationIter;
 pub const RotationIter = rotation.RotationIter;
 pub const Axial = axial.Axial;
 pub const Axis = axis.Axis;
-
-comptime {
-    std.testing.refAllDecls(isit);
-}

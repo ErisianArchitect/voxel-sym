@@ -20,8 +20,6 @@ const root = @import("voxel_symmetry");
 
 const ProtoFace = root.ProtoFace;
 
-const checking = @import("coreo");
-
 const cfg: root.Config = .{.coordinate_system = .RH_Z_UP, .face_orientations = .{
     .up = .right,
     .forward = .right,

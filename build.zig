@@ -61,7 +61,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     }));
 
-    // imports.addDependency("coreo", coreo_mod, null);
+    imports.addDependency("coreo", coreo_mod, null);
 
     const build_opts = b.addOptions();
     const check_opts = b.addOptions();

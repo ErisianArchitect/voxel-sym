@@ -7,6 +7,6 @@ function run() {
     zig build run "$@"
 }
 
-function update-submodules() {
+function update-subs() {
     git --git-dir ./build_tools/.git pull origin main
 }

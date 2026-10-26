@@ -33,15 +33,14 @@
     // internet connectivity.
     .dependencies = .{
         .coreo = .{
-            .url = "git+https://github.com/ErisianArchitect/coreo.git#1c6b32eb8a600f518d210dacaf5345a6ecaae4b3",
-            .hash = "coreo-0.0.0-fncdPygbAQBLLnafEczFLBSNoEmEfnxgck5SvPMxR4hF",
+            .url = "git+https://github.com/ErisianArchitect/coreo.git#518c815afd2ee55bbcaf32d3091160ff39a4fdac",
+            .hash = "coreo-0.0.0-fncdP3hZAQAxnC1btBRQK1qLyt3b8dEPpGYYpFg63Nb_",
         },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
         "src",
-        "build_tools",
         "LICENSE",
         // For example...
         //"LICENSE",
