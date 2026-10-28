@@ -37,6 +37,7 @@ pub const EnumField = struct {
 };
 
 pub fn enumFields(comptime Enum: type) []const EnumField {
+    @setEvalBranchQuota(std.math.maxInt(u32));
     return comptime blk: {
         const field_count = fieldCount(Enum);
         const names = @typeInfo(Enum).@"enum".field_names;
@@ -54,6 +55,7 @@ pub fn enumFields(comptime Enum: type) []const EnumField {
 
 pub fn enumDiscriminantSortedFields(comptime Enum: type) [fieldCount(Enum)]EnumField {
     comptime ensureEnum(Enum);
+    @setEvalBranchQuota(std.math.maxInt(u32));
     const fields: []const EnumField = enumFields(Enum);
     const sorted_fields: [fields.len]EnumField = blk: {
         var field_buf: [fields.len]EnumField = undefined;

@@ -57,6 +57,16 @@ pub fn Rotation(cfg: Config) type {
         }
 
         pub fn rotateWorldFace(world: Face, up: Face, angle: u2) Face {
+            if (up == .up) {
+                return switch (world) {
+                    .up => up,
+                    .forward => up.getUpAtAngle(angle),
+                    .left => up.getLeftAtAngle(angle),
+                    .backward => up.getDownAtAngle(angle),
+                    .right => up.getRightAtAngle(angle),
+                    .down => up.invert(),
+                };
+            }
             switch (cfg.face_orientations.up) {
                 .forward => {
                     return switch (world) {
@@ -71,9 +81,9 @@ pub fn Rotation(cfg: Config) type {
                 .left => {
                     return switch (world) {
                         .up => up,
-                        .forward => up.getRightAtAngle(angle),
+                        .forward => up.getLeftAtAngle(angle),
                         .left => up.getUpAtAngle(angle),
-                        .backward => up.getLeftAtAngle(angle),
+                        .backward => up.getRightAtAngle(angle),
                         .right => up.getDownAtAngle(angle),
                         .down => up.invert(),
                     };
@@ -91,9 +101,9 @@ pub fn Rotation(cfg: Config) type {
                 .right => {
                     return switch (world) {
                         .up => up,
-                        .forward => up.getLeftAtAngle(angle),
+                        .forward => up.getRightAtAngle(angle),
                         .left => up.getDownAtAngle(angle),
-                        .backward => up.getRightAtAngle(angle),
+                        .backward => up.getLeftAtAngle(angle),
                         .right => up.getUpAtAngle(angle),
                         .down => up.invert(),
                     };
@@ -212,39 +222,37 @@ pub fn Rotation(cfg: Config) type {
             return @intFromEnum(self);
         }
 
-        const FACE_DEST_TABLE: RotationFaceTable(cfg, Face, .value) = blk: {
-            var table: RotationFaceTable(cfg, Face, .value) = undefined;
-            @setEvalBranchQuota(10000);
-            for (0..24) |rot_i| {
-                const rot: Self = @enumFromInt(rot_i);
-                for (0..6) |face_i| {
-                    const face: Face = @enumFromInt(face_i);
-                    table.set(rot, face, util.rotateWorldFace(face, rot.getUp(), rot.getAngle()));
-                }
-            }
-            break :blk table;
-        };
         pub inline fn faceDest(self: Self, face: Face) Face {
-            return FACE_DEST_TABLE.get(self, face);
-        }
-
-        const FACE_SOURCE_TABLE: RotationFaceTable(cfg, Face, .value) = blk: {
-            var table: RotationFaceTable(cfg, Face, .value) = undefined;
-            @setEvalBranchQuota(10000);
-            for (0..24) |rot_i| {
-                const rot: Self = @enumFromInt(rot_i);
-                for (0..6) |face_i| {
-                    const face: Face = @enumFromInt(face_i);
-                    table.set(rot, util.rotateWorldFace(face, rot.getUp(), rot.getAngle()), face);
+            const TABLE: RotationFaceTable(cfg, Face, .value) = comptime blk: {
+                var table: RotationFaceTable(cfg, Face, .value) = undefined;
+                @setEvalBranchQuota(10000);
+                for (0..24) |rot_i| {
+                    const rot: Self = @enumFromInt(rot_i);
+                    for (0..6) |face_i| {
+                        const it_face: Face = @enumFromInt(face_i);
+                        table.set(rot, it_face, util.rotateWorldFace(it_face, rot.getUp(), rot.getAngle()));
+                    }
                 }
-            }
-            break :blk table;
-        };
-        pub inline fn faceSrc(self: Self, face: Face) Face {
-            return FACE_SOURCE_TABLE.get(self, face);
+                break :blk table;
+            };
+            return TABLE.get(self, face);
         }
 
-        
+        pub inline fn faceSrc(self: Self, face: Face) Face {
+            const TABLE: RotationFaceTable(cfg, Face, .value) = comptime blk: {
+                var table: RotationFaceTable(cfg, Face, .value) = undefined;
+                @setEvalBranchQuota(10000);
+                for (0..24) |rot_i| {
+                    const rot: Self = @enumFromInt(rot_i);
+                    for (0..6) |face_i| {
+                        const it_face: Face = @enumFromInt(face_i);
+                        table.set(rot, util.rotateWorldFace(it_face, rot.getUp(), rot.getAngle()), it_face);
+                    }
+                }
+                break :blk table;
+            };
+            return TABLE.get(self, face);
+        }
     };
 }
 
@@ -293,7 +301,7 @@ fn RotationCayleyInner(comptime cfg: Config, comptime T: type, comptime pass_by:
 
         table: EnumTable(Rot, T, pass_by) align(
             // aligned is more slightly more performant, but takes up more memory.
-            std.math.ceilPowerOfTwo(usize, @alignOf(T) * 24)
+            std.math.ceilPowerOfTwo(usize, @alignOf(T) * 24) catch unreachable
         ),
     };
 }
@@ -369,62 +377,6 @@ pub fn RotationIter(comptime cfg: Config) type {
             if (self.current()) |rot| {
                 self.index += 1;
                 return rot;
-            }
-            return null;
-        }
-    };
-}
-
-pub fn CartesianRotationIter(comptime cfg: Config, comptime cols: comptime_int) type {
-    comptime if (cols == 0) {
-        @compileError("Must have 1 or more columns.");
-    };
-    const Rot = Rotation(cfg);
-    return extern struct {
-        const Self = @This();
-        
-        pub const Columns = [cols]Rot;
-        const InnerColumns = [cols]u8;
-
-        const ColUnion = extern union {
-            rots: Columns,
-            inner: InnerColumns,
-        };
-        comptime {
-            isit.assertSameSize(Columns, InnerColumns, null);
-            isit.assertSameAlign(Columns, InnerColumns, null);
-            isit.assertSameSize(Columns, ColUnion, null);
-            isit.assertSameAlign(Columns, ColUnion, null);
-        }
-        
-        columns: InnerColumns = @splat(0),
-
-        pub inline fn init() Self {
-            return .{};
-        }
-
-        pub inline fn exhausted(self: Self) bool {
-            return self.columns[0] > 23;
-        }
-
-        pub inline fn current(self: Self) ?[cols]Rot {
-            if (self.exhausted()) return null;
-            const conv: ColUnion = .{.inner = self.columns};
-            return conv.rots;
-        }
-
-        pub inline fn next(self: *Self) ?[cols]Rot {
-            if (self.current()) |result| {
-                var i: usize = cols;
-                while(true) {
-                    i -= 1;
-                    if (i == 0 or self.columns[i] < 23) {
-                        self.columns[i] += 1;
-                        break;
-                    }
-                    self.columns[i] = 0;
-                }
-                return result;
             }
             return null;
         }

@@ -30,8 +30,6 @@ const Prototype = util.proto.Prototype;
 const isit = @import("isit.zig");
 const unimplemented = isit.unimplemented;
 
-
-
 const lib_axis = @import("axis.zig");
 
 pub fn Face(cfg: Config) type {
@@ -113,44 +111,45 @@ pub fn Face(cfg: Config) type {
             } else @compileError("Invalid coordinate system.");
         }
 
-        const AXIAL_NAMES: Table([:0]const u8, .value) = .initPairs(.{
-            .{.neg_x, "neg_x"},
-            .{.neg_y, "neg_y"},
-            .{.neg_z, "neg_z"},
-            .{.pos_x, "pos_x"},
-            .{.pos_y, "pos_y"},
-            .{.pos_z, "pos_z"},
-        });
         pub inline fn axialName(self: Self) [:0]const u8 {
-            return AXIAL_NAMES.get(self);
+            const TABLE: Table([:0]const u8, .value) = comptime .initPairs(.{
+                .{.neg_x, "neg_x"},
+                .{.neg_y, "neg_y"},
+                .{.neg_z, "neg_z"},
+                .{.pos_x, "pos_x"},
+                .{.pos_y, "pos_y"},
+                .{.pos_z, "pos_z"},
+            });
+            return TABLE.get(self);
         }
 
-        const FACE_NAMES: Table([:0]const u8, .value) = .initPairs(.{
-            .{.up, "up"},
-            .{.forward, "forward"},
-            .{.left, "left"},
-            .{.backward, "backward"},
-            .{.right, "right"},
-            .{.down, "down"},
-        });
         pub inline fn faceName(self: Self) [:0]const u8 {
-            return FACE_NAMES.get(self);
+            const TABLE: Table([:0]const u8, .value) = comptime .initPairs(.{
+                .{.up, "up"},
+                .{.forward, "forward"},
+                .{.left, "left"},
+                .{.backward, "backward"},
+                .{.right, "right"},
+                .{.down, "down"},
+            });
+            return TABLE.get(self);
         }
 
-        const INVERT_TABLE: Table(Self, .value) align(8) = .initPairs(.{
-            .{.neg_x, .pos_x},
-            .{.neg_y, .pos_y},
-            .{.neg_z, .pos_z},
-            .{.pos_x, .neg_x},
-            .{.pos_y, .neg_y},
-            .{.pos_z, .neg_z},
-        });
         pub inline fn invert(self: Self) Self {
-            return INVERT_TABLE.get(self);
+            const TABLE: Table(Self, .value) align(8) = comptime .initPairs(.{
+                .{.neg_x, .pos_x},
+                .{.neg_y, .pos_y},
+                .{.neg_z, .pos_z},
+                .{.pos_x, .neg_x},
+                .{.pos_y, .neg_y},
+                .{.pos_z, .neg_z},
+            });
+            return TABLE.get(self);
         }
 
         const UP_FACE_TABLE: Table(Self, .value) = .initFields(.{
-            .up = Self.fromProto(FO.getUp(.up)),
+            // .up = Self.fromProto(FO.getUp(.up)),
+            .up = .up,
             .forward = Self.fromProto(FO.getUp(.forward)),
             .left = Self.fromProto(FO.getUp(.left)),
             .backward = Self.fromProto(FO.getUp(.backward)),
@@ -306,7 +305,7 @@ pub fn Face(cfg: Config) type {
         }
 
         pub inline fn toCoord(self: Self, comptime T: type) [3]T {
-            const TABLE: Table([3]T, .value) = .initFields(.{
+            const TABLE: Table([3]T, .value) = comptime .initFields(.{
                 .neg_x = .{-1, 0, 0},
                 .neg_y = .{0, -1, 0},
                 .neg_z = .{0, 0, -1},

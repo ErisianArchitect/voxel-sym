@@ -19,7 +19,7 @@ const metaprog = @import("metaprog");
 const isit = @import("isit.zig");
 
 fn fieldCount(comptime T: type) usize {
-    return std.meta.fields(T).len;
+    return std.meta.fieldNames(T).len;
 }
 
 fn ensureEnum(comptime T: type) void {

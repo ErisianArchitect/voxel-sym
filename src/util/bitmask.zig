@@ -17,10 +17,9 @@ const std = @import("std");
 
 const isit = @import("voxel_symmetry").isit;
 
-pub const BitRange = extern struct {
+pub const BitRange = packed struct(u64) {
     const Self = @This();
 
-    _align: void align(8) = {},
     start: u32 = 0,
     end: u32 = 0,
 

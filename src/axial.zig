@@ -50,16 +50,16 @@ pub fn Axial(comptime cfg: Config) type {
             return @enumFromInt(@intFromEnum(value));
         }
 
-        const AXIS_TABLE: EnumTable(Self, Axis, .value) = .initFields(.{
-            .neg_x = .x,
-            .neg_y = .y,
-            .neg_z = .z,
-            .pos_x = .x,
-            .pos_y = .y,
-            .pos_z = .z,
-        });
         pub inline fn axis(self: Self) Axis {
-            return AXIS_TABLE.get(self);
+            const TABLE: EnumTable(Self, Axis, .value) = comptime.initFields(.{
+                .neg_x = .x,
+                .neg_y = .y,
+                .neg_z = .z,
+                .pos_x = .x,
+                .pos_y = .y,
+                .pos_z = .z,
+            });
+            return TABLE.get(self);
         }
     };
 }

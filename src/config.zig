@@ -13,15 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// const EnumTable = @import("util/enum_table.zig").EnumTable;
 const util = @import("util");
 const EnumTable = util.enum_table.EnumTable;
 
+/// Specifies whether angles should be clockwise (cw) or counter-clockwise (ccw).
 pub const AngleDirection = enum(u8) {
+    /// Clockwise angles.
     cw = 0,
+    /// Counter-clockwise angles.
     ccw = 1,
 };
 
+/// Axis enum for ProtoAxial.
 pub const ProtoAxis = enum(u8) {
     const Self = @This();
     
@@ -29,14 +32,13 @@ pub const ProtoAxis = enum(u8) {
     y = 1,
     z = 2,
 
-    const FACES_TABLE: EnumTable(Self, [2]ProtoFace, .value) = .initFields(.{
-        .x = .{.neg_x, .pos_x},
-        .y = .{.neg_y, .pos_y},
-        .z = .{.neg_z, .pos_z},
-    });
-
-    pub inline fn faces(self: Self) [2]ProtoFace {
-        return FACES_TABLE.get(self);
+    pub inline fn faces(self: Self) [2]ProtoAxial {
+        const TABLE: EnumTable(Self, [2]ProtoAxial, .value) = comptime .initFields(.{
+            .x = .{.neg_x, .pos_x},
+            .y = .{.neg_y, .pos_y},
+            .z = .{.neg_z, .pos_z},
+        });
+        return TABLE.get(self);
     }
 
     pub inline fn isOrthoTo(self: Self, other: Self) Self {
@@ -66,29 +68,28 @@ pub const ProtoFace = enum(u8) {
     right = 4,
     down = 5,
 
-    const INVERT_TABLE: EnumTable(Self, Self, .value) = .initFields(.{
-        .up = .down,
-        .down = .up,
-        .left = .right,
-        .right = .left,
-        .forward = .backward,
-        .backward = .forward,
-    });
     pub inline fn invert(self: Self) Self {
-        return INVERT_TABLE.get(self);
+        const TABLE: EnumTable(Self, Self, .value) = comptime .initFields(.{
+            .up = .down,
+            .down = .up,
+            .left = .right,
+            .right = .left,
+            .forward = .backward,
+            .backward = .forward,
+        });
+        return TABLE.get(self);
     }
 
-    const AXIS_TABLE: EnumTable(Self, ProtoCardinalAxis, .value) = .initFields(.{
-        .up = .up_down,
-        .down = .up_down,
-        .left = .left_right,
-        .right = .left_right,
-        .forward = .forward_backward,
-        .backward = .forward_backward,
-    });
-
     pub inline fn axis(self: Self) ProtoCardinalAxis {
-        return AXIS_TABLE.get(self);
+        const TABLE: EnumTable(Self, ProtoCardinalAxis, .value) = comptime .initFields(.{
+            .up = .up_down,
+            .down = .up_down,
+            .left = .left_right,
+            .right = .left_right,
+            .forward = .forward_backward,
+            .backward = .forward_backward,
+        });
+        return TABLE.get(self);
     }
 
     pub inline fn isOrthoTo(self: Self, other: Self) bool {
@@ -106,27 +107,28 @@ pub const ProtoAxial = enum(u8) {
     pos_y = 4,
     pos_z = 5,
 
-    const INVERT_TABLE: EnumTable(Self, Self, .value) = .initFields(.{
-        .neg_x = .pos_x,
-        .neg_y = .pos_y,
-        .neg_z = .pos_z,
-        .pos_x = .neg_x,
-        .pos_y = .neg_y,
-        .pos_z = .neg_z,
-    });
     pub inline fn invert(self: Self) Self {
-        return INVERT_TABLE.get(self);
+        const TABLE: EnumTable(Self, Self, .value) = comptime .initFields(.{
+            .neg_x = .pos_x,
+            .neg_y = .pos_y,
+            .neg_z = .pos_z,
+            .pos_x = .neg_x,
+            .pos_y = .neg_y,
+            .pos_z = .neg_z,
+        });
+        return TABLE.get(self);
     }
-    const AXIS_TABLE: EnumTable(Self, ProtoAxis, .value) = .initFields(.{
-        .neg_x = .x,
-        .neg_y = .y,
-        .neg_z = .z,
-        .pos_x = .x,
-        .pos_y = .y,
-        .pos_z = .z,
-    });
+
     pub inline fn axis(self: Self) ProtoAxis {
-        return AXIS_TABLE.get(self);
+        const TABLE: EnumTable(Self, ProtoAxis, .value) = comptime .initFields(.{
+            .neg_x = .x,
+            .neg_y = .y,
+            .neg_z = .z,
+            .pos_x = .x,
+            .pos_y = .y,
+            .pos_z = .z,
+        });
+        return TABLE.get(self);
     }
 };
 

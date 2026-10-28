@@ -66,8 +66,10 @@ pub fn build(b: *std.Build) void {
 
     build_opts.addOption(bool, "CHECK", false);
     check_opts.addOption(bool, "CHECK", false);
+    build_opts.addOption([]const u8, "REPO", "https://github.com/ErisianArchitect/voxel-sym");
+    check_opts.addOption([]const u8, "REPO", "https://github.com/ErisianArchitect/voxel-sym");
 
-    imports.addOptions("cfg", build_opts, check_opts);
+    imports.addOptions("CFG", build_opts, check_opts);
 
     imports.addDependency("coreo", coreo_mod, null);
 
@@ -92,16 +94,11 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(lib);
 
-    const check = b.addExecutable(.{
+    const check = b.addLibrary(.{
         .name = "voxel_symmetry_check",
         .use_lld = true,
         .use_llvm = true,
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = imports.check.slice(),
-        }),
+        .root_module = check_voxsym_mod,
     });
 
     const run_step = b.step("run", "Run the app");

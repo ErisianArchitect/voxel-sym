@@ -58,6 +58,7 @@ pub fn EnumTable(comptime Enum: type, comptime T: type, comptime pass_by: PassBy
     const fields = metaprog.enumDiscriminantSortedFields(Enum);
     const first_disc = fields[0].value;
     var current = first_disc;
+    @setEvalBranchQuota(std.math.maxInt(u32));
     for (fields[1..]) |field| {
         if (field.value != current + 1) {
             @compileError("Enum discriminants must be contiguous.");
@@ -84,8 +85,10 @@ pub fn EnumTable(comptime Enum: type, comptime T: type, comptime pass_by: PassBy
 
         pub fn initWith(comptime builder: fn(Enum) T) Self {
             var table = Self.init(undefined);
-            inline for (std.meta.fields(Enum)) |field| {
-                table.set(field.value, builder(field.value));
+            @setEvalBranchQuota(std.math.maxInt(u32));
+            inline for (std.meta.fieldNames(Enum)) |field_name| {
+                const value = @field(Enum, field_name);
+                table.set(value, builder(value));
             }
             return table;
         }
@@ -102,14 +105,15 @@ pub fn EnumTable(comptime Enum: type, comptime T: type, comptime pass_by: PassBy
 
         pub fn initFields(fields_table: anytype) Self {
             var table = Self.undef();
-            inline for(std.meta.fields(@TypeOf(fields_table))) |field| {
-                comptime if (!@hasDecl(Enum, field.name) and !@hasField(Enum, field.name)) {
-                    @compileError("initFields: Missing field/decl " ++ field.name ++ " in `" ++ @typeName(Enum) ++ "`.");
-                } else if (@TypeOf(@field(Enum, field.name)) != Enum) {
-                    @compileError("The " ++ field.name ++ " field is not the correct type.");
+            @setEvalBranchQuota(std.math.maxInt(u32));
+            inline for(std.meta.fieldNames(@TypeOf(fields_table))) |field_name| {
+                comptime if (!@hasDecl(Enum, field_name) and !@hasField(Enum, field_name)) {
+                    @compileError("initFields: Missing field/decl " ++ field_name ++ " in `" ++ @typeName(Enum) ++ "`.");
+                } else if (@TypeOf(@field(Enum, field_name)) != Enum) {
+                    @compileError("The " ++ field_name ++ " field is not the correct type.");
                 };
-                const enum_value = @field(Enum, field.name);
-                const field_value = @field(fields_table, field.name);
+                const enum_value = @field(Enum, field_name);
+                const field_value = @field(fields_table, field_name);
                 table.set(enum_value, field_value);
             }
             return table;
@@ -117,11 +121,12 @@ pub fn EnumTable(comptime Enum: type, comptime T: type, comptime pass_by: PassBy
 
         pub fn map(self: Self, comptime R: type, comptime map_pass_by: PassBy, context: anytype, mapper: anytype) EnumTable(Enum, R, map_pass_by) {
             var table: EnumTable(Enum, R, map_pass_by) = .undef();
-            inline for (std.meta.fields(Enum)) |field| {
-                comptime if (@TypeOf(@field(Enum, field.name)) != Enum) {
-                    @compileError("The " ++ field.name ++ " field is not the correct type.");
+            @setEvalBranchQuota(std.math.maxInt(u32));
+            inline for (std.meta.fieldNames(Enum)) |field_name| {
+                comptime if (@TypeOf(@field(Enum, field_name)) != Enum) {
+                    @compileError("The " ++ field_name ++ " field is not the correct type.");
                 };
-                const enum_value = @field(Enum, field.name);
+                const enum_value = @field(Enum, field_name);
                 table.set(enum_value, mapper(context, enum_value, self.get(enum_value)));
             }
             return table;

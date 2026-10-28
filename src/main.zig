@@ -14,79 +14,60 @@
 // limitations under the License.
 
 const std = @import("std");
-const isit = @import("voxel_symmetry").isit;
+const coreo = @import("coreo");
 
 const root = @import("voxel_symmetry");
+const metaprog = @import("metaprog");
+
+const isit = root.isit;
 
 const ProtoFace = root.ProtoFace;
 
+const print = coreo.debug.print;
+const println = coreo.debug.println;
+const qprint = coreo.debug.qprint;
+const qprintln = coreo.debug.qprintln;
+
 const cfg: root.Config = .{.coordinate_system = .RH_Z_UP, .face_orientations = .{
-    .up = .right,
-    .forward = .right,
-    .left = .backward,
-    .backward = .down,
-    .right = .forward,
-    .down = .right,
+    .up = .left,
+    .forward = .left,
+    .left = .up,
+    .backward = .up,
+    .right = .up,
+    .down = .forward,
 }};
 
 const Face = root.Face(cfg);
 const Rot = root.Rotation(cfg);
 const CartIter = Rot.CartesianIter;
 
-const print = std.debug.print;
-
-pub inline fn println(comptime fmt: []const u8, comptime args: anytype) void {
-    print(fmt ++ "\n", args);
+fn checkFace(comptime rot: Rot, face: Face, expect: Face) !void {
+    try std.testing.expectEqual(expect, rot.faceDest(face));
 }
 
-// const TestExternStruct = extern struct {
-//     foo: u32,
-//     bar: u64,
-//     baz: u8,
-// };
-
-// comptime {
-//     isit.checks.assertOffsetOfEq(TestExternStruct, .bar, 8, null);
-//     // isit.checks.assertOffsetOfEq(TestExternStruct, .bar, 4, null);
-// }
-
-
-comptime {
-    std.testing.refAllDecls(root);
-}
-
-const Doobie = enum(u8) {
-    foo = 2,
-    bar = 1,
-    baz = 0,
-};
-
-const metaprog = @import("metaprog");
-
-pub const RotationCycleCount = packed struct {
-    count: u2,
-};
-comptime {
-    isit.assertSameSize(RotationCycleCount, u8, null);
-}
-
-pub const Symmetry = packed struct {
-    angle: u2,
-    up: u5,
-    flip: bool,
-};
-comptime {
-    isit.assertSameSize(Symmetry, u8, null);
-}
+// FIXME: This is all kinds of fucked up.
+//        [ ]: faceDest/faceSrc is broken.
+//             You need to account for not only the orientation of
+//             Face.up, but also the orientation of the Up face of
+//             the rotation.
 
 pub fn main(_: std.process.Init) !void {
-    // const r = Rot.init(.left, 2);
+    // const r = Rot.init(.right, 0);
+    
+    // println("{s}", .{@tagName(Rot.up0.faceDest(.forward))});
     // println("{s}", .{@tagName(r.faceDest(.forward))});
+    try checkFace(.up0, .forward, .forward);
+    // try checkFace(.up0, .forward, .forward);
+    // try checkFace(.up1, .forward, .left);
+    // try checkFace(.up2, .forward, .backward);
+    // try checkFace(.up3, .forward, .right);
+    // try checkFace(.forward0, .forward, .up);
+    // try checkFace(.forward0, .left, .right);
     // println("Hello, {s}!", .{"World"});
-    const fields = comptime metaprog.enumDiscriminantSortedFields(Doobie);
-    inline for (fields) |field| {
-        println("{s} = {d}", .{field.name, field.value});
-    }
+    // const fields = comptime metaprog.enumDiscriminantSortedFields(Doobie);
+    // inline for (fields) |field| {
+    //     println("{s} = {d}", .{field.name, field.value});
+    // }
 }
 
 test "Quick" {

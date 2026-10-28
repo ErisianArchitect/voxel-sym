@@ -25,7 +25,7 @@ pub const axis = @import("axis.zig");
 
 comptime {
     @import("coreo").debug.checking.checkAllDecls(
-        @import("cfg").check,
+        @import("CFG").CHECK,
         &.{
             isit,
             cartesian,
@@ -48,7 +48,6 @@ pub const ProtoAxial = config.ProtoAxial;
 pub const ProtoCardinalAxis = config.ProtoCardinalAxis;
 pub const Face = face.Face;
 pub const Rotation = rotation.Rotation;
-pub const CartesianRotationIter = rotation.CartesianRotationIter;
 pub const RotationIter = rotation.RotationIter;
 pub const Axial = axial.Axial;
 pub const Axis = axis.Axis;

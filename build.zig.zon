@@ -33,8 +33,8 @@
     // internet connectivity.
     .dependencies = .{
         .coreo = .{
-            .url = "git+https://github.com/ErisianArchitect/coreo.git#518c815afd2ee55bbcaf32d3091160ff39a4fdac",
-            .hash = "coreo-0.0.0-fncdP3hZAQAxnC1btBRQK1qLyt3b8dEPpGYYpFg63Nb_",
+            .url = "git+https://github.com/ErisianArchitect/coreo.git#39000dceef7871bf0731e32f15393ed877d2f518",
+            .hash = "coreo-0.0.0-fncdPyRfAQBsc-95O-7pYt7JNoqSWUywPYFXJnSbdJgH",
         },
     },
     .paths = .{
