@@ -56,7 +56,7 @@ pub fn main(_: std.process.Init) !void {
     
     // println("{s}", .{@tagName(Rot.up0.faceDest(.forward))});
     // println("{s}", .{@tagName(r.faceDest(.forward))});
-    try checkFace(.up0, .forward, .forward);
+    try checkFace(.forward2, .forward, .up);
     // try checkFace(.up0, .forward, .forward);
     // try checkFace(.up1, .forward, .left);
     // try checkFace(.up2, .forward, .backward);
@@ -70,11 +70,6 @@ pub fn main(_: std.process.Init) !void {
     // }
 }
 
-test "Quick" {
-    const r = Rot.left2;
-    try std.testing.expectEqual(r.faceDest(.forward), .forward);
-}
-
 test "Rotation Face Associativity" {
     var rot_it = Rot.iter();
     while (rot_it.next()) |rot| {
@@ -82,7 +77,7 @@ test "Rotation Face Associativity" {
         while (face_it.next()) |face| {
             const dest = rot.faceDest(face);
             const src = rot.faceSrc(dest);
-            try std.testing.expectEqual(src, face);
+            try std.testing.expectEqual(face, src);
         }
     }
 }

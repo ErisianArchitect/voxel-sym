@@ -148,8 +148,7 @@ pub fn Face(cfg: Config) type {
         }
 
         const UP_FACE_TABLE: Table(Self, .value) = .initFields(.{
-            // .up = Self.fromProto(FO.getUp(.up)),
-            .up = .up,
+            .up = Self.fromProto(FO.getUp(.up)),
             .forward = Self.fromProto(FO.getUp(.forward)),
             .left = Self.fromProto(FO.getUp(.left)),
             .backward = Self.fromProto(FO.getUp(.backward)),
