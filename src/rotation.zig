@@ -57,16 +57,20 @@ pub fn Rotation(cfg: Config) type {
         }
 
         pub fn rotateWorldFace(world: Face, up: Face, angle: u2) Face {
-            if (up == .up) {
-                return switch (world) {
-                    .up => up,
-                    .forward => up.getUpAtAngle(angle),
-                    .left => up.getLeftAtAngle(angle),
-                    .backward => up.getDownAtAngle(angle),
-                    .right => up.getRightAtAngle(angle),
-                    .down => up.invert(),
-                };
-            }
+            // return switch (world) {
+            //     .up => up,
+            //     .forward => 
+            // };
+            // if (up == .up) {
+            //     return switch (world) {
+            //         .up => up,
+            //         .forward => up.getUpAtAngle(angle),
+            //         .left => up.getLeftAtAngle(angle),
+            //         .backward => up.getDownAtAngle(angle),
+            //         .right => up.getRightAtAngle(angle),
+            //         .down => up.invert(),
+            //     };
+            // }
             switch (cfg.face_orientations.up) {
                 .forward => {
                     return switch (world) {
@@ -81,9 +85,9 @@ pub fn Rotation(cfg: Config) type {
                 .left => {
                     return switch (world) {
                         .up => up,
-                        .forward => up.getLeftAtAngle(angle),
+                        .forward => up.getRightAtAngle(angle),
                         .left => up.getUpAtAngle(angle),
-                        .backward => up.getRightAtAngle(angle),
+                        .backward => up.getLeftAtAngle(angle),
                         .right => up.getDownAtAngle(angle),
                         .down => up.invert(),
                     };
@@ -101,9 +105,9 @@ pub fn Rotation(cfg: Config) type {
                 .right => {
                     return switch (world) {
                         .up => up,
-                        .forward => up.getRightAtAngle(angle),
+                        .forward => up.getLeftAtAngle(angle),
                         .left => up.getDownAtAngle(angle),
-                        .backward => up.getLeftAtAngle(angle),
+                        .backward => up.getRightAtAngle(angle),
                         .right => up.getUpAtAngle(angle),
                         .down => up.invert(),
                     };
@@ -253,6 +257,46 @@ pub fn Rotation(cfg: Config) type {
             };
             return TABLE.get(self, face);
         }
+
+        pub inline fn fromUpAndForward(up: Face, forward: Face) ?Self {
+            const TABLE: [6][8]?Self = comptime ret: {
+                var table: [6][8]?Self = @splat(@splat(null));
+                var it = Self.iter();
+                while (it.next()) |rot| {
+                    const up_face = rot.getUp();
+                    const fwd_face = rot.faceDest(.forward);
+                    table[@intFromEnum(up_face)][@intFromEnum(fwd_face)] = rot;
+                }
+                break :ret table;
+            };
+            return TABLE[@intFromEnum(up)][@intFromEnum(forward)];
+        }
+
+        /// Applies `other` to `self`.
+        pub inline fn compose(self: Self, other: Self) Self {
+            const up = self.getUp();
+            const fwd = self.faceDest(.forward);
+            const rot_up = other.faceDest(up);
+            const rot_fwd = other.faceDest(fwd);
+            @setRuntimeSafety(false);
+            return fromUpAndForward(rot_up, rot_fwd).?;
+        }
+
+        /// Applies `other` to `self`.
+        pub const rotateBy = compose;
+
+        /// Inverts the application of `other` to `self` (turning backwards).
+        pub inline fn inverseCompose(self: Self, other: Self) Self {
+            const up = self.getUp();
+            const fwd = self.faceDest(.forward);
+            const rot_up = other.faceSrc(up);
+            const rot_fwd = other.faceSrc(fwd);
+            @setRuntimeSafety(false);
+            return fromUpAndForward(rot_up, rot_fwd).?;
+        }
+
+        /// Inverts the application of `other` to `self` (turning backwards).
+        pub const inverseRotateBy = inverseCompose;
     };
 }
 

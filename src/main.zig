@@ -34,40 +34,38 @@ const cfg: root.Config = .{.coordinate_system = .RH_Z_UP, .face_orientations = .
     .left = .up,
     .backward = .up,
     .right = .up,
-    .down = .forward,
+    .down = .backward,
 }};
 
 const Face = root.Face(cfg);
 const Rot = root.Rotation(cfg);
 const CartIter = Rot.CartesianIter;
 
-fn checkFace(comptime rot: Rot, face: Face, expect: Face) !void {
+fn checkFace(rot: Rot, face: Face, expect: Face) !void {
     try std.testing.expectEqual(expect, rot.faceDest(face));
 }
 
-// FIXME: This is all kinds of fucked up.
-//        [ ]: faceDest/faceSrc is broken.
-//             You need to account for not only the orientation of
-//             Face.up, but also the orientation of the Up face of
-//             the rotation.
-
 pub fn main(_: std.process.Init) !void {
-    // const r = Rot.init(.right, 0);
+    const turn: Rot = .right0;
+    var rot = Rot.IDENTITY;
+    try checkFace(rot, .up, .up);
+    rot = rot.compose(turn);
+    try checkFace(rot, .up, .right);
+    rot = rot.compose(turn);
+    try checkFace(rot, .up, .down);
+    rot = rot.compose(turn);
+    try checkFace(rot, .up, .left);
+    rot = rot.compose(turn);
+    try checkFace(rot, .up, .up);
+    // rot = rot.compose(left_turn);
+    // try checkFace(rot, .forward, .left);
+    // rot = rot.compose(left_turn);
+    // try checkFace(rot, .forward, .backward);
+    // rot = rot.compose(left_turn);
+    // try checkFace(rot, .forward, .right);
+    // rot = rot.compose(left_turn);
+    // try checkFace(rot, .forward, .forward);
     
-    // println("{s}", .{@tagName(Rot.up0.faceDest(.forward))});
-    // println("{s}", .{@tagName(r.faceDest(.forward))});
-    try checkFace(.forward2, .forward, .up);
-    // try checkFace(.up0, .forward, .forward);
-    // try checkFace(.up1, .forward, .left);
-    // try checkFace(.up2, .forward, .backward);
-    // try checkFace(.up3, .forward, .right);
-    // try checkFace(.forward0, .forward, .up);
-    // try checkFace(.forward0, .left, .right);
-    // println("Hello, {s}!", .{"World"});
-    // const fields = comptime metaprog.enumDiscriminantSortedFields(Doobie);
-    // inline for (fields) |field| {
-    //     println("{s} = {d}", .{field.name, field.value});
-    // }
 }
 
 test "Rotation Face Associativity" {
