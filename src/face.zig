@@ -147,33 +147,6 @@ pub fn Face(cfg: Config) type {
             return TABLE.get(self);
         }
 
-        const UP_FACE_TABLE: Table(Self, .value) = .initFields(.{
-            .up = Self.fromProto(FO.getUp(.up)),
-            .forward = Self.fromProto(FO.getUp(.forward)),
-            .left = Self.fromProto(FO.getUp(.left)),
-            .backward = Self.fromProto(FO.getUp(.backward)),
-            .right = Self.fromProto(FO.getUp(.right)),
-            .down = Self.fromProto(FO.getUp(.down)),
-        });
-        const DOWN_FACE_TABLE: Table(Self, .value) = UP_FACE_TABLE.map(Self, .value, {}, struct {
-            pub inline fn function(_: void, _: Self, face: Self) Self {
-                return face.invert();
-            }
-        }.function);
-        const LEFT_FACE_TABLE: Table(Self, .value) = .initFields(.{
-            .up = Self.fromProto(FO.getLeft(.up)),
-            .left = Self.fromProto(FO.getLeft(.left)),
-            .backward = Self.fromProto(FO.getLeft(.backward)),
-            .right = Self.fromProto(FO.getLeft(.right)),
-            .forward = Self.fromProto(FO.getLeft(.forward)),
-            .down = Self.fromProto(FO.getLeft(.down)),
-        });
-        const RIGHT_FACE_TABLE: Table(Self, .value) = LEFT_FACE_TABLE.map(Self, .value, {}, struct {
-            pub inline fn function(_: void, _: Self, face: Self) Self {
-                return face.invert();
-            }
-        }.function);
-
         const FaceAtAngle = struct {
             up: Table(Self, .value),
             left: Table(Self, .value),
