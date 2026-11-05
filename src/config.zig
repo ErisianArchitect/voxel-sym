@@ -247,7 +247,7 @@ pub const FaceOrientations = extern struct {
     // The following getter functions don't need to be optimized
     // since they are intended to be used for comptime config.
 
-    pub fn getUp(self: Self, face: ProtoFace) ProtoFace {
+    pub fn getUp(comptime self: Self, face: ProtoFace) ProtoFace {
         return switch (face) {
             .up => self.up,
             .forward => self.forward,
@@ -259,7 +259,7 @@ pub const FaceOrientations = extern struct {
     }
 
     pub fn getUpAtAngle(
-        self: Self,
+        comptime self: Self,
         comptime angle_dir: AngleDirection,
         face: ProtoFace,
         angle: u2,
@@ -280,12 +280,12 @@ pub const FaceOrientations = extern struct {
         };
     }
 
-    pub fn getDown(self: Self, face: ProtoFace) ProtoFace {
+    pub fn getDown(comptime self: Self, face: ProtoFace) ProtoFace {
         self.getUp(face).invert();
     }
 
     pub fn getDownAtAngle(
-        self: Self,
+        comptime self: Self,
         comptime angle_dir: AngleDirection,
         face: ProtoFace,
         angle: u2,
@@ -297,7 +297,7 @@ pub const FaceOrientations = extern struct {
         @panic("Not orthograpic.");
     }
 
-    pub fn getLeft(self: Self, face: ProtoFace) ProtoFace {
+    pub fn getLeft(comptime self: Self, face: ProtoFace) ProtoFace {
         return switch (face) {
             .up => switch (self.up) {
                 .forward => .left,
@@ -345,7 +345,7 @@ pub const FaceOrientations = extern struct {
     }
 
     pub fn getLeftAtAngle(
-        self: Self,
+        comptime self: Self,
         comptime angle_dir: AngleDirection,
         face: ProtoFace,
         angle: u2,
@@ -366,11 +366,11 @@ pub const FaceOrientations = extern struct {
         };
     }
 
-    pub fn getRight(self: Self, face: ProtoFace) ProtoFace {
+    pub fn getRight(comptime self: Self, face: ProtoFace) ProtoFace {
         return self.getLeft(face).invert();
     }
 
-    pub fn getRightAtAngle(self: Self, comptime angle_dir: AngleDirection, face: ProtoFace, angle: u2) ProtoFace {
+    pub fn getRightAtAngle(comptime self: Self, comptime angle_dir: AngleDirection, face: ProtoFace, angle: u2) ProtoFace {
         return self.getLeftAtAngle(angle_dir, face, angle).invert();
     }
 
@@ -386,7 +386,7 @@ pub const FaceOrientations = extern struct {
     }
 
     /// Determines if all of the orientations are orthographic to their axis.
-    pub fn isOrtho(self: Self) bool {
+    pub fn isOrtho(comptime self: Self) bool {
         return self.up.isOrthoTo(.up)
         and self.forward.isOrthoTo(.forward)
         and self.left.isOrthoTo(.left)
@@ -395,7 +395,7 @@ pub const FaceOrientations = extern struct {
         and self.down.isOrthoTo(.down);
     }
 
-    pub fn verify(self: Self) void {
+    pub fn verify(comptime self: Self) void {
         comptime {
             expectOrtho(self.up, .up, "up");
             expectOrtho(self.forward, .forward, "forward");
@@ -406,7 +406,7 @@ pub const FaceOrientations = extern struct {
         }
     }
 
-    pub fn verified(self: Self) Self {
+    pub fn verified(comptime self: Self) Self {
         self.verify();
         return self;
     }
@@ -418,12 +418,12 @@ pub const Config = struct {
     coordinate_system: CoordinateSystem = .{},
     face_orientations: FaceOrientations = .{},
 
-    pub fn verify(self: Self) void {
+    pub fn verify(comptime self: Self) void {
         self.coordinate_system.verify();
         self.face_orientations.verify();
     }
 
-    pub fn verified(self: Self) Self {
+    pub fn verified(comptime self: Self) Self {
         self.verify();
         return self;
     }

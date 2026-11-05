@@ -28,13 +28,13 @@ const println = coreo.debug.println;
 const qprint = coreo.debug.qprint;
 const qprintln = coreo.debug.qprintln;
 
-const cfg: root.Config = .{.coordinate_system = .RH_Z_UP, .face_orientations = .{
+const cfg: root.Config = .{.coordinate_system = .LH_Y_UP, .face_orientations = .{
     .up = .left,
     .forward = .left,
-    .left = .up,
-    .backward = .up,
-    .right = .up,
-    .down = .backward,
+    .left = .forward,
+    .backward = .left,
+    .right = .forward,
+    .down = .left,
 }};
 
 const Face = root.Face(cfg);
@@ -46,8 +46,8 @@ fn checkFace(rot: Rot, face: Face, expect: Face) !void {
 }
 
 pub fn main(_: std.process.Init) !void {
-    const turn: Rot = .right0;
-    var rot = Rot.IDENTITY;
+    const turn: Rot = .right1;
+    var rot = Rot.up3;
     try checkFace(rot, .up, .up);
     rot = rot.compose(turn);
     try checkFace(rot, .up, .right);

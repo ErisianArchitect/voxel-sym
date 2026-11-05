@@ -202,61 +202,102 @@ pub fn Face(cfg: Config) type {
             }
         }
 
-        const UP_AT_ANGLE_TABLE: [4]Table(Self, .value) = faceAtAngleTable(.{
-            .up = UP_FACE_TABLE,
-            .left = LEFT_FACE_TABLE,
-            .down = DOWN_FACE_TABLE,
-            .right = RIGHT_FACE_TABLE,
-        });
-        const LEFT_AT_ANGLE_TABLE: [4]Table(Self, .value) = faceAtAngleTable(.{
-            .up = LEFT_FACE_TABLE,
-            .left = DOWN_FACE_TABLE,
-            .down = RIGHT_FACE_TABLE,
-            .right = UP_FACE_TABLE,
-        });
-        const DOWN_AT_ANGLE_TABLE: [4]Table(Self, .value) = faceAtAngleTable(.{
-            .up = DOWN_FACE_TABLE,
-            .left = RIGHT_FACE_TABLE,
-            .down = UP_FACE_TABLE,
-            .right = LEFT_FACE_TABLE,
-        });
-        const RIGHT_AT_ANGLE_TABLE: [4]Table(Self, .value) = faceAtAngleTable(.{
-            .up = RIGHT_FACE_TABLE,
-            .left = UP_FACE_TABLE,
-            .down = LEFT_FACE_TABLE,
-            .right = DOWN_FACE_TABLE,
-        });
+        pub const GLOBAL = struct {
+            pub const FACE_UP: Table(Self, .value) = .initFields(.{
+                .up = .forward,
+                .forward = .up,
+                .right = .up,
+                .backward = .up,
+                .left = .up,
+                .down = .backward,
+            });
+
+            pub const FACE_RIGHT: Table(Self, .value) = .initFields(.{
+                .up = .right,
+                .forward = .left,
+                .right = .forward,
+                .backward = .right,
+                .left = .backward,
+                .down = .right,
+            });
+
+            pub const FACE_DOWN: Table(Self, .value) = .initFields(.{
+                .up = .backward,
+                .forward = .down,
+                .right = .down,
+                .backward = .down,
+                .left = .down,
+                .down = .forward,
+            });
+
+            pub const FACE_LEFT: Table(Self, .value) = .initFields(.{
+                .up = .left,
+                .forward = .right,
+                .right = .backward,
+                .backward = .left,
+                .left = .forward,
+                .down = .left,
+            });
+
+            pub const FACE_UP_AT_ANGLE: [4]Table(Self, .value) = faceAtAngleTable(.{
+                .up = FACE_UP,
+                .right = FACE_RIGHT,
+                .down = FACE_DOWN,
+                .left = FACE_LEFT,
+            });
+
+            pub const FACE_RIGHT_AT_ANGLE: [4]Table(Self, .value) = faceAtAngleTable(.{
+                .up = FACE_RIGHT,
+                .right = FACE_DOWN,
+                .down = FACE_LEFT,
+                .left = FACE_UP,
+            });
+            
+            pub const FACE_DOWN_AT_ANGLE: [4]Table(Self, .value) = faceAtAngleTable(.{
+                .up = FACE_DOWN,
+                .right = FACE_LEFT,
+                .down = FACE_UP,
+                .left = FACE_RIGHT,
+            });
+
+            pub const FACE_LEFT_AT_ANGLE: [4]Table(Self, .value) = faceAtAngleTable(.{
+                .up = FACE_LEFT,
+                .right = FACE_UP,
+                .down = FACE_RIGHT,
+                .left = FACE_DOWN,
+            });
+        };
 
         pub inline fn getUp(self: Self) Self {
-            return UP_FACE_TABLE.get(self);
+            return GLOBAL.FACE_UP.get(self);
         }
 
         pub inline fn getUpAtAngle(self: Self, angle: u2) Self {
-            return UP_AT_ANGLE_TABLE[angle].get(self);
+            return GLOBAL.FACE_UP_AT_ANGLE[angle].get(self);
         }
 
         pub inline fn getLeft(self: Self) Self {
-            return LEFT_FACE_TABLE.get(self);
+            return GLOBAL.FACE_LEFT.get(self);
         }
 
         pub inline fn getLeftAtAngle(self: Self, angle: u2) Self {
-            return LEFT_AT_ANGLE_TABLE[angle].get(self);
+            return GLOBAL.FACE_LEFT_AT_ANGLE[angle].get(self);
         }
 
         pub inline fn getDown(self: Self) Self {
-            return DOWN_FACE_TABLE.get(self);
+            return GLOBAL.FACE_DOWN.get(self);
         }
 
         pub inline fn getDownAtAngle(self: Self, angle: u2) Self {
-            return DOWN_AT_ANGLE_TABLE[angle].get(self);
+            return GLOBAL.FACE_DOWN_AT_ANGLE[angle].get(self);
         }
 
         pub inline fn getRight(self: Self) Self {
-            return RIGHT_FACE_TABLE.get(self);
+            return GLOBAL.FACE_RIGHT.get(self);
         }
 
         pub inline fn getRightAtAngle(self: Self, angle: u2) Self {
-            return RIGHT_AT_ANGLE_TABLE[angle].get(self);
+            return GLOBAL.FACE_RIGHT_AT_ANGLE[angle].get(self);
         }
 
         pub inline fn isNeg(self: Self) bool {

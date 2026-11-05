@@ -56,7 +56,16 @@ pub fn Rotation(cfg: Config) type {
             return (@as(u8, @intFromEnum(face)) << 2) | @as(u8, angle);
         }
 
+        // FIXME: Decide whether rotations should depend on face orientations (probably shouldn't for consistency).
         pub fn rotateWorldFace(world: Face, up: Face, angle: u2) Face {
+            return switch (world) {
+                .up => up,
+                .down => up.invert(),
+                .forward => Face.GLOBAL.FACE_UP_AT_ANGLE[angle].get(up),
+                .right => Face.GLOBAL.FACE_RIGHT_AT_ANGLE[angle].get(up),
+                .backward => Face.GLOBAL.FACE_DOWN_AT_ANGLE[angle].get(up),
+                .left => Face.GLOBAL.FACE_LEFT_AT_ANGLE[angle].get(up),
+            };
             // return switch (world) {
             //     .up => up,
             //     .forward => 
@@ -71,49 +80,49 @@ pub fn Rotation(cfg: Config) type {
             //         .down => up.invert(),
             //     };
             // }
-            switch (cfg.face_orientations.up) {
-                .forward => {
-                    return switch (world) {
-                        .up => up,
-                        .forward => up.getUpAtAngle(angle),
-                        .left => up.getLeftAtAngle(angle),
-                        .backward => up.getDownAtAngle(angle),
-                        .right => up.getRightAtAngle(angle),
-                        .down => up.invert(),
-                    };
-                },
-                .left => {
-                    return switch (world) {
-                        .up => up,
-                        .forward => up.getRightAtAngle(angle),
-                        .left => up.getUpAtAngle(angle),
-                        .backward => up.getLeftAtAngle(angle),
-                        .right => up.getDownAtAngle(angle),
-                        .down => up.invert(),
-                    };
-                },
-                .backward => {
-                    return switch (world) {
-                        .up => up,
-                        .forward => up.getDownAtAngle(angle),
-                        .left => up.getRightAtAngle(angle),
-                        .backward => up.getUpAtAngle(angle),
-                        .right => up.getLeftAtAngle(angle),
-                        .down => up.invert(),
-                    };
-                },
-                .right => {
-                    return switch (world) {
-                        .up => up,
-                        .forward => up.getLeftAtAngle(angle),
-                        .left => up.getDownAtAngle(angle),
-                        .backward => up.getRightAtAngle(angle),
-                        .right => up.getUpAtAngle(angle),
-                        .down => up.invert(),
-                    };
-                },
-                else => unreachable,
-            }
+            // switch (cfg.face_orientations.up) {
+            //     .forward => {
+            //         return switch (world) {
+            //             .up => up,
+            //             .forward => up.getUpAtAngle(angle),
+            //             .left => up.getLeftAtAngle(angle),
+            //             .backward => up.getDownAtAngle(angle),
+            //             .right => up.getRightAtAngle(angle),
+            //             .down => up.invert(),
+            //         };
+            //     },
+            //     .left => {
+            //         return switch (world) {
+            //             .up => up,
+            //             .forward => up.getRightAtAngle(angle),
+            //             .left => up.getUpAtAngle(angle),
+            //             .backward => up.getLeftAtAngle(angle),
+            //             .right => up.getDownAtAngle(angle),
+            //             .down => up.invert(),
+            //         };
+            //     },
+            //     .backward => {
+            //         return switch (world) {
+            //             .up => up,
+            //             .forward => up.getDownAtAngle(angle),
+            //             .left => up.getRightAtAngle(angle),
+            //             .backward => up.getUpAtAngle(angle),
+            //             .right => up.getLeftAtAngle(angle),
+            //             .down => up.invert(),
+            //         };
+            //     },
+            //     .right => {
+            //         return switch (world) {
+            //             .up => up,
+            //             .forward => up.getLeftAtAngle(angle),
+            //             .left => up.getDownAtAngle(angle),
+            //             .backward => up.getRightAtAngle(angle),
+            //             .right => up.getUpAtAngle(angle),
+            //             .down => up.invert(),
+            //         };
+            //     },
+            //     else => unreachable,
+            // }
         }
     };
     return enum(u8) {
@@ -274,12 +283,26 @@ pub fn Rotation(cfg: Config) type {
 
         /// Applies `other` to `self`.
         pub inline fn compose(self: Self, other: Self) Self {
-            const up = self.getUp();
-            const fwd = self.faceDest(.forward);
-            const rot_up = other.faceDest(up);
-            const rot_fwd = other.faceDest(fwd);
+            const TABLE: [24][24]Self = comptime ret: {
+                const innerCompose = struct {
+                    pub fn inner(lhs: Self, rhs: Self) Self {
+                        const up = lhs.getUp();
+                        const fwd = lhs.faceDest(.forward);
+                        const rot_up = rhs.faceDest(up);
+                        const rot_fwd = rhs.faceDest(fwd);
+                        @setRuntimeSafety(false);
+                        return fromUpAndForward(rot_up, rot_fwd).?;
+                    }
+                }.inner;
+                var table: [24][24]Self = undefined;
+                var cart = Self.cartesianProduct(2);
+                while (cart.next()) |it| {
+                    table[@intFromEnum(it[0])][@intFromEnum(it[1])] = innerCompose(it[0], it[1]);
+                }
+                break :ret table;
+            };
             @setRuntimeSafety(false);
-            return fromUpAndForward(rot_up, rot_fwd).?;
+            return TABLE[@intFromEnum(self)][@intFromEnum(other)];
         }
 
         /// Applies `other` to `self`.
@@ -287,12 +310,26 @@ pub fn Rotation(cfg: Config) type {
 
         /// Inverts the application of `other` to `self` (turning backwards).
         pub inline fn inverseCompose(self: Self, other: Self) Self {
-            const up = self.getUp();
-            const fwd = self.faceDest(.forward);
-            const rot_up = other.faceSrc(up);
-            const rot_fwd = other.faceSrc(fwd);
+            const TABLE: [24][24]Self = comptime ret: {
+                const innerCompose = struct {
+                    pub fn inner(lhs: Self, rhs: Self) Self {
+                        const up = lhs.getUp();
+                        const fwd = lhs.faceDest(.forward);
+                        const rot_up = rhs.faceSrc(up);
+                        const rot_fwd = rhs.faceSrc(fwd);
+                        @setRuntimeSafety(false);
+                        return fromUpAndForward(rot_up, rot_fwd).?;
+                    }
+                }.inner;
+                var table: [24][24]Self = undefined;
+                var cart = Self.cartesianProduct(2);
+                while (cart.next()) |it| {
+                    table[@intFromEnum(it[0])][@intFromEnum(it[1])] = innerCompose(it[0], it[1]);
+                }
+                break :ret table;
+            };
             @setRuntimeSafety(false);
-            return fromUpAndForward(rot_up, rot_fwd).?;
+            return TABLE[@intFromEnum(self)][@intFromEnum(other)];
         }
 
         /// Inverts the application of `other` to `self` (turning backwards).

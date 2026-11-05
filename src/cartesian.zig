@@ -29,7 +29,7 @@ fn ensureEnum(comptime T: type) void {
     }
 }
 
-const EnumField = std.builtin.Type.EnumField;
+const EnumField = metaprog.EnumField;
 
 fn enumDiscriminantSortedFields(comptime Enum: type) [fieldCount(Enum)]EnumField {
     comptime ensureEnum(Enum);
