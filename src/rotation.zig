@@ -298,6 +298,7 @@ pub fn Rotation(cfg: Config) type {
                 }.inner;
                 var table: [24][24]Self = undefined;
                 var cart = Self.cartesianProduct(2);
+                @setEvalBranchQuota(std.math.maxInt(u32));
                 while (cart.next()) |it| {
                     table[@intFromEnum(it[0])][@intFromEnum(it[1])] = innerCompose(it[0], it[1]);
                 }
@@ -325,6 +326,7 @@ pub fn Rotation(cfg: Config) type {
                 }.inner;
                 var table: [24][24]Self = undefined;
                 var cart = Self.cartesianProduct(2);
+                @setEvalBranchQuota(std.math.maxInt(u32));
                 while (cart.next()) |it| {
                     table[@intFromEnum(it[0])][@intFromEnum(it[1])] = innerCompose(it[0], it[1]);
                 }
