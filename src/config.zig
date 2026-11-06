@@ -132,6 +132,8 @@ pub const ProtoAxial = enum(u8) {
     }
 };
 
+/// The coordinate system determines the Up, Right, and Forward vectors of 3D space. It also gives the option for
+/// clockwise or counter-clockwise rotations.
 pub const CoordinateSystem = extern struct {
     const Self = @This();
 
@@ -234,6 +236,7 @@ pub const CoordinateSystem = extern struct {
     }
 };
 
+/// The face orientations determine the direction that each face's Up direction points.
 pub const FaceOrientations = extern struct {
     const Self = @This();
 
@@ -281,7 +284,7 @@ pub const FaceOrientations = extern struct {
     }
 
     pub fn getDown(comptime self: Self, face: ProtoFace) ProtoFace {
-        self.getUp(face).invert();
+        return self.getUp(face).invert();
     }
 
     pub fn getDownAtAngle(

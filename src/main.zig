@@ -28,13 +28,18 @@ const println = coreo.debug.println;
 const qprint = coreo.debug.qprint;
 const qprintln = coreo.debug.qprintln;
 
+const testing = std.testing;
+
+const expectEq = testing.expectEqual;
+const expect = testing.expect;
+
 const cfg: root.Config = .{.coordinate_system = .LH_Y_UP, .face_orientations = .{
-    .up = .left,
-    .forward = .left,
-    .left = .forward,
-    .backward = .left,
+    .up = .right,
+    .forward = .up,
+    .left = .up,
+    .backward = .up,
     .right = .forward,
-    .down = .left,
+    .down = .backward,
 }};
 
 const Face = root.Face(cfg);
@@ -42,32 +47,39 @@ const Rot = root.Rotation(cfg);
 const CartIter = Rot.CartesianIter;
 const Axis = root.Axis(cfg);
 
-fn checkFace(rot: Rot, face: Face, expect: Face) !void {
-    try std.testing.expectEqual(expect, rot.faceDest(face));
+fn checkFace(rot: Rot, face: Face, expected: Face) !void {
+    try std.testing.expectEqual(expected, rot.faceDest(face));
 }
 
 pub fn main(_: std.process.Init) !void {
-    const turn: Rot = .right1;
-    var rot = Rot.up3;
-    try checkFace(rot, .up, .up);
-    rot = rot.compose(turn);
-    try checkFace(rot, .up, .right);
-    rot = rot.compose(turn);
-    try checkFace(rot, .up, .down);
-    rot = rot.compose(turn);
-    try checkFace(rot, .up, .left);
-    rot = rot.compose(turn);
-    try checkFace(rot, .up, .up);
-    try std.testing.expectEqual(Axis.x, Face.neg_x.axis());
-    // rot = rot.compose(left_turn);
-    // try checkFace(rot, .forward, .left);
-    // rot = rot.compose(left_turn);
-    // try checkFace(rot, .forward, .backward);
-    // rot = rot.compose(left_turn);
-    // try checkFace(rot, .forward, .right);
-    // rot = rot.compose(left_turn);
-    // try checkFace(rot, .forward, .forward);
-    
+    const rot: Rot = .right0;
+    println("Angle: {d}", .{rot.srcAngle(.right)});
+}
+
+test "Face Angle" {
+    var rot_it = Rot.iter();
+    while (rot_it.next()) |rot| {
+        var face_it = Face.iter();
+        while (face_it.next()) |face| {
+            const src_angle = rot.srcAngle(face);
+            const src_face = rot.faceSrc(face);
+            const dest_angle = rot.destAngle(src_face);
+            try expectEq(src_angle, dest_angle);
+        }
+    }
+}
+
+test "Rotation Compose Associativity" {
+    var cart = Rot.cartesianProduct(2);
+    while (cart.next()) |r| {
+        const lhs = r[0];
+        const rhs = r[1];
+        {
+            const rotated = lhs.compose(rhs);
+            const unrotated = rotated.inverseCompose(rhs);
+            try expectEq(lhs, unrotated);
+        }
+    }
 }
 
 test "Rotation Face Associativity" {

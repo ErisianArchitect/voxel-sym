@@ -15,6 +15,8 @@
 
 const std = @import("std");
 
+const coreo = @import("coreo");
+
 const isit = @import("isit.zig");
 const cartesian = @import("cartesian.zig");
 
@@ -32,6 +34,8 @@ const PassBy = enum_table.PassBy;
 const axis_mod = @import("axis.zig");
 const axial_mod = @import("axial.zig");
 const face_mod = @import("face.zig");
+
+const unimplemented = coreo.debug.unimplemented;
 
 // ========================================
 //              +--------+            ^
@@ -66,64 +70,58 @@ pub fn Rotation(cfg: Config) type {
                 .backward => Face.GLOBAL.FACE_DOWN_AT_ANGLE[angle].get(up),
                 .left => Face.GLOBAL.FACE_LEFT_AT_ANGLE[angle].get(up),
             };
-            // return switch (world) {
-            //     .up => up,
-            //     .forward => 
-            // };
-            // if (up == .up) {
-            //     return switch (world) {
-            //         .up => up,
-            //         .forward => up.getUpAtAngle(angle),
-            //         .left => up.getLeftAtAngle(angle),
-            //         .backward => up.getDownAtAngle(angle),
-            //         .right => up.getRightAtAngle(angle),
-            //         .down => up.invert(),
-            //     };
-            // }
-            // switch (cfg.face_orientations.up) {
-            //     .forward => {
-            //         return switch (world) {
-            //             .up => up,
-            //             .forward => up.getUpAtAngle(angle),
-            //             .left => up.getLeftAtAngle(angle),
-            //             .backward => up.getDownAtAngle(angle),
-            //             .right => up.getRightAtAngle(angle),
-            //             .down => up.invert(),
-            //         };
-            //     },
-            //     .left => {
-            //         return switch (world) {
-            //             .up => up,
-            //             .forward => up.getRightAtAngle(angle),
-            //             .left => up.getUpAtAngle(angle),
-            //             .backward => up.getLeftAtAngle(angle),
-            //             .right => up.getDownAtAngle(angle),
-            //             .down => up.invert(),
-            //         };
-            //     },
-            //     .backward => {
-            //         return switch (world) {
-            //             .up => up,
-            //             .forward => up.getDownAtAngle(angle),
-            //             .left => up.getRightAtAngle(angle),
-            //             .backward => up.getUpAtAngle(angle),
-            //             .right => up.getLeftAtAngle(angle),
-            //             .down => up.invert(),
-            //         };
-            //     },
-            //     .right => {
-            //         return switch (world) {
-            //             .up => up,
-            //             .forward => up.getLeftAtAngle(angle),
-            //             .left => up.getDownAtAngle(angle),
-            //             .backward => up.getRightAtAngle(angle),
-            //             .right => up.getUpAtAngle(angle),
-            //             .down => up.invert(),
-            //         };
-            //     },
-            //     else => unreachable,
-            // }
         }
+        
+        pub const FaceAnglesTable = packed struct {
+            const Self = @This();
+    
+            const Packer = packed struct(u16) {
+                a: u2,
+                b: u2,
+                c: u2,
+                d: u2,
+                e: u2,
+                f: u2,
+                _: u4 = 0,
+            };
+
+            table: packed union(u16) {
+                bits: u16,
+                pack: Packer,
+            },
+
+            pub fn init() Self {
+                return .{.table = .{.bits = 0}};
+            }
+
+            pub fn initTable(table: [6]u2) Self {
+                const pack = Packer{.a=table[0], .b=table[1], .c=table[2], .d=table[3], .e=table[4], .f=table[5]};
+                return .{
+                    .table = .{.pack = pack},
+                };
+            }
+
+            pub fn initPairs(pairs: []const struct {Face, u2}) Self {
+                var builder = Self.init();
+                for(pairs) |p| {
+                    builder.set(p[0], p[1]);
+                }
+                return builder;
+            }
+
+            pub fn set(self: *Self, face: Face, angle: u2) void {
+                @setRuntimeSafety(false);
+                const shift: u4 = @as(u4, @intCast(@intFromEnum(face))) << 1;
+                const delete_mask: u16 = ~(@as(u16, 0b11) << shift);
+                self.table.bits = (self.table.bits & delete_mask) | (@as(u16, angle) << shift);
+            }
+
+            pub fn get(self: Self, face: Face) u2 {
+                @setRuntimeSafety(false);
+                const shift: u4 = @as(u4, @intCast(@intFromEnum(face))) << 1;
+                return @intCast((self.table.bits >> shift) & 0b11);
+            }
+        };
     };
     return enum(u8) {
         const Self = @This();
@@ -188,6 +186,10 @@ pub fn Rotation(cfg: Config) type {
             return @enumFromInt((@as(u8, @intFromEnum(up)) << 2) | @as(u8, angle));
         }
 
+        pub const CFG = cfg;
+        pub const CS = cfg.coordinate_system;
+        pub const FO = cfg.face_orientations;
+
         pub const IDENTITY: Self = @enumFromInt(0);
         pub const MIN: Self = @enumFromInt(0);
         pub const MAX: Self = @enumFromInt(23);
@@ -235,7 +237,7 @@ pub fn Rotation(cfg: Config) type {
             return @intFromEnum(self);
         }
 
-        pub inline fn faceDest(self: Self, face: Face) Face {
+        pub inline fn faceDest(self: Self, local_face: Face) Face {
             const TABLE: RotationFaceTable(cfg, Face, .value) = comptime blk: {
                 var table: RotationFaceTable(cfg, Face, .value) = undefined;
                 @setEvalBranchQuota(10000);
@@ -248,10 +250,10 @@ pub fn Rotation(cfg: Config) type {
                 }
                 break :blk table;
             };
-            return TABLE.get(self, face);
+            return TABLE.get(self, local_face);
         }
 
-        pub inline fn faceSrc(self: Self, face: Face) Face {
+        pub inline fn faceSrc(self: Self, global_face: Face) Face {
             const TABLE: RotationFaceTable(cfg, Face, .value) = comptime blk: {
                 var table: RotationFaceTable(cfg, Face, .value) = undefined;
                 @setEvalBranchQuota(10000);
@@ -264,7 +266,7 @@ pub fn Rotation(cfg: Config) type {
                 }
                 break :blk table;
             };
-            return TABLE.get(self, face);
+            return TABLE.get(self, global_face);
         }
 
         pub inline fn fromUpAndForward(up: Face, forward: Face) ?Self {
@@ -334,6 +336,64 @@ pub fn Rotation(cfg: Config) type {
 
         /// Inverts the application of `other` to `self` (turning backwards).
         pub const inverseRotateBy = inverseCompose;
+
+        fn slowGetFaceAngle(comptime self: Self, comptime global_face: Face) u2 {
+            const upAtAngle = struct {
+                fn func(face: Face, angle: u2) Face {
+                    return @enumFromInt(@intFromEnum(FO.getUpAtAngle(
+                        CS.angle_direction,
+                        @enumFromInt(@intFromEnum(face)),
+                        angle,
+                    )));
+                }
+            }.func;
+            const src_face = self.faceSrc(global_face);
+            const src_up = upAtAngle(src_face, 0);
+            const dest_up = self.faceDest(src_up);
+            for (0..3) |angle| {
+                const up_at = upAtAngle(global_face, angle);
+                if (dest_up == up_at) {
+                    return angle;
+                }
+            }
+            return 3;
+        }
+
+        /// Gets the global angle of the source face of `global_face` in `self`.
+        pub fn srcAngle(self: Self, global_face: Face) u2 {
+            const TABLE: Table(util.FaceAnglesTable, .value) = comptime ret: {
+                var table: Table(util.FaceAnglesTable, .value) = undefined;
+                var rot_it = Self.iter();
+                while (rot_it.next()) |rot| {
+                    var face_angles: util.FaceAnglesTable = undefined;
+                    var face_it = Face.iter();
+                    while (face_it.next()) |face| {
+                        face_angles.set(face, slowGetFaceAngle(rot, face));
+                    }
+                    table.set(rot, face_angles);
+                }
+                break:ret table;
+            };
+            return TABLE.get(self).get(global_face);
+        }
+
+        pub fn destAngle(self: Self, local_face: Face) u2 {
+            const TABLE: Table(util.FaceAnglesTable, .value) = comptime ret: {
+                var table: Table(util.FaceAnglesTable, .value) = undefined;
+                var rot_it = Self.iter();
+                while (rot_it.next()) |rot| {
+                    var face_angles: util.FaceAnglesTable = undefined;
+                    var face_it = Face.iter();
+                    while (face_it.next()) |face| {
+                        const dest_face = rot.faceDest(face);
+                        face_angles.set(face, slowGetFaceAngle(rot, dest_face));
+                    }
+                    table.set(rot, face_angles);
+                }
+                break:ret table;
+            };
+            return TABLE.get(self).get(local_face);
+        }
     };
 }
 
@@ -407,7 +467,7 @@ pub fn RotationCayley(comptime cfg: Config, comptime T: type, comptime pass_by: 
 
 fn InnerFaceTable(comptime cfg: Config, comptime T: type, comptime pass_by: PassBy) type {
     const Face = face_mod.Face(cfg);
-    return extern struct {
+    return struct {
         const Self = @This();
 
         faces: EnumTable(Face, T, pass_by) align(
@@ -419,7 +479,7 @@ fn InnerFaceTable(comptime cfg: Config, comptime T: type, comptime pass_by: Pass
 pub fn RotationFaceTable(comptime cfg: Config, comptime T: type, comptime pass_by: PassBy) type {
     const Rot = Rotation(cfg);
     const Face = face_mod.Face(cfg);
-    return extern struct {
+    return struct {
         const Self = @This();
         
         table: EnumTable(Rot, InnerFaceTable(cfg, T, pass_by), .ref),

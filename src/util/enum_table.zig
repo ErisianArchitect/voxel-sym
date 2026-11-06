@@ -65,7 +65,7 @@ pub fn EnumTable(comptime Enum: type, comptime T: type, comptime pass_by: PassBy
         }
         current = field.value;
     }
-    return extern struct {
+    return struct {
         const Self = @This();
 
         table: [fields.len]T,
