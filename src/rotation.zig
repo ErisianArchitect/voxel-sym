@@ -364,6 +364,7 @@ pub fn Rotation(cfg: Config) type {
             const TABLE: Table(util.FaceAnglesTable, .value) = comptime ret: {
                 var table: Table(util.FaceAnglesTable, .value) = undefined;
                 var rot_it = Self.iter();
+                @setEvalBranchQuota(std.math.maxInt(u32));
                 while (rot_it.next()) |rot| {
                     var face_angles: util.FaceAnglesTable = undefined;
                     var face_it = Face.iter();
@@ -381,6 +382,7 @@ pub fn Rotation(cfg: Config) type {
             const TABLE: Table(util.FaceAnglesTable, .value) = comptime ret: {
                 var table: Table(util.FaceAnglesTable, .value) = undefined;
                 var rot_it = Self.iter();
+                @setEvalBranchQuota(std.math.maxInt(u32));
                 while (rot_it.next()) |rot| {
                     var face_angles: util.FaceAnglesTable = undefined;
                     var face_it = Face.iter();
